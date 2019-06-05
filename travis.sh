@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -27,32 +27,48 @@ EXIT_STATUS=0
 # Builds and Publishes a SNAPSHOT
 function build_snapshot() {
   echo -e "Building and publishing a snapshot out of branch [$TRAVIS_BRANCH]"
-  ./gradlew -PartifactoryRepoKey=libs-snapshot-local -DbuildInfo.build.number=${TRAVIS_COMMIT::7} artifactoryPublish --stacktrace || EXIT_STATUS=$?
+  ./gradlew -PartifactoryRepoKey=testing-snapshot-local -DbuildInfo.build.number=${TRAVIS_COMMIT::7} artifactoryPublish --stacktrace || EXIT_STATUS=$?
+  uploadToDockerHub $TRAVIS_REPO_SLUG latest
 }
 
 # Builds a Pull Request
 function build_pullrequest() {
-  echo -e "Building pull request #$TRAVIS_PULL_REQUEST of branch [$TRAVIS_BRANCH]. Won't publish anything to Artifactory."
+  echo -e "Building pull request #$TRAVIS_PULL_REQUEST of branch [$TRAVIS_BRANCH]. Won't publish anything to Artifactory and Docker Hub."
   ./gradlew publishToMavenLocal rat || EXIT_STATUS=$?
 }
 
 # For other branches we need to add branch name as prefix
 function build_otherbranch() {
-  echo -e "Building a snapshot out of branch [$TRAVIS_BRANCH] and publishing it with prefix '${TRAVIS_BRANCH}-SNAPSHOT'"
+  echo -e "Building a snapshot out of branch [$TRAVIS_BRANCH] and publishing it with prefix '${TRAVIS_BRANCH}-SNAPSHOT'. Won't publish to Docker Hub."
   ./gradlew -PartifactoryRepoKey=libs-snapshot-local -DbuildInfo.build.number=${TRAVIS_COMMIT::7} -PexternalVersion=${TRAVIS_BRANCH}-SNAPSHOT artifactoryPublish --stacktrace || EXIT_STATUS=$?
 }
 
 # Builds and Publishes a Tag
 function build_tag() {
-  echo -e "Building tag [$TRAVIS_TAG] and publishing it as a release"
-  ./gradlew -PartifactoryRepoKey=libs-release-local -PexternalVersion=$TRAVIS_TAG artifactoryPublish --stacktrace || EXIT_STATUS=$?
+  echo -e "Building tag [$TRAVIS_TAG] and publishing it as a release in Artifactory and Docker Hub."
+  ./gradlew -PartifactoryRepoKey=testing-release-local -PexternalVersion=$TRAVIS_TAG artifactoryPublish --stacktrace || EXIT_STATUS=$?
+  uploadToDockerHub $TRAVIS_REPO_SLUG $TRAVIS_TAG
+}
 
+# Builds and uploads an image to hub.docker.com
+function uploadToDockerHub() {
+  targetDockerRepository=$1
+  tagName=$2
+
+  echo -e "Building Docker image and tagging with '${tagName}'"
+  docker build -t ${targetDockerRepository}:${tagName} .
+  docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
+  echo -e "Pushing image to Docker Hub $targetDockerRepository"
+  docker push ${targetDockerRepository}:${tagName} || EXIT_STATUS=$?
+  return 0
 }
 
 echo -e "TRAVIS_BRANCH=$TRAVIS_BRANCH"
 echo -e "TRAVIS_TAG=$TRAVIS_TAG"
 echo -e "TRAVIS_COMMIT=${TRAVIS_COMMIT::7}"
 echo -e "TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST"
+echo -e "TRAVIS_REPO_SLUG=$TRAVIS_REPO_SLUG"
+echo -e "DOCKER_USER=$DOCKER_USER"
 
 # Build Logic
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then

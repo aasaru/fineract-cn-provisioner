@@ -10,7 +10,7 @@ docs/
 gradlew
 HEADER
 NOTICE.txt
-service/
+service/src/
 .git/
 .gradle/
 .gitignore

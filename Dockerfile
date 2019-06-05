@@ -25,6 +25,7 @@ ENV server.max-http-header-size=16384 \
     server.port=$provisioner_port
 
 WORKDIR /tmp
-COPY provisioner-service-boot-0.1.0-BUILD-SNAPSHOT.jar .
 
-CMD ["java", "-jar", "provisioner-service-boot-0.1.0-BUILD-SNAPSHOT.jar"]
+COPY service/build/libs/service-0.1.0-BUILD-SNAPSHOT-boot.jar /tmp/provisioner-service-boot.jar
+
+CMD ["java", "-jar", "provisioner-service-boot.jar"]
