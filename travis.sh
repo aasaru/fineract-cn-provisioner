@@ -39,7 +39,7 @@ function build_pullrequest() {
 # Builds Forked (non-apache) Repository
 function build_fork() {
   echo -e "Building branch $TRAVIS_BRANCH of fork $TRAVIS_REPO_SLUG. Won't publish anything to Artifactory."
-  ./gradlew --warning-mode all publishToMavenLocal rat || EXIT_STATUS=$?
+  ./gradlew all publishToMavenLocal rat || EXIT_STATUS=$?
 }
 
 # For other branches we need to add branch name as prefix
