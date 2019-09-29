@@ -84,9 +84,7 @@ publishing {
         }
         bootService(MavenPublication) {
             // "boot" jar
-            artifact(file("$buildDir/libs/$project.name-$project.version-${bootRepackage.classifier}.jar")) {
-                classifier 'boot'
-            }
+            artifact(file("$buildDir/libs/$project.name-$project.version-${bootRepackage.classifier}.jar"))
             groupId project.group
             artifactId ("$project.name-boot")
             version project.findProperty('externalVersion') ?: project.version
