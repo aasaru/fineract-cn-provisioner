@@ -45,7 +45,6 @@ task artifactoryPublish {
     dependsOn gradle.includedBuild('api').task(':artifactoryPublish')
     dependsOn gradle.includedBuild('service').task(':artifactoryPublish')
     dependsOn gradle.includedBuild('component-test').task(':artifactoryPublish')
-
 }
 
 task clean {
